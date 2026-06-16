@@ -195,7 +195,7 @@ label.fld{display:block;font-size:13px;color:var(--muted);font-weight:700;margin
 <div id="app" class="hidden">
   <header class="topbar">
     <div class="row">
-      <div class="brand"><span class="logo">BUX</span><div>מרכז המשמרת<small>CrossFit BUX</small></div></div>
+      <div class="brand"><span class="logo" style="cursor:pointer" onclick="IS_OWNER?go('owner'):ownerLogin()" title="BUX">BUX</span><div>מרכז המשמרת<small>CrossFit BUX</small></div></div>
       <div class="coach-chip"><span class="dot"></span><span id="curCoach">—</span><button onclick="switchCoach()">החלף</button></div>
     </div>
     <div class="meta-line">
@@ -211,6 +211,7 @@ label.fld{display:block;font-size:13px;color:var(--muted);font-weight:700;margin
     <div id="view-members" class="screen hidden"></div>
     <div id="view-folder" class="screen hidden"></div>
     <div id="view-more" class="screen hidden"></div>
+    <div id="view-owner" class="screen hidden"></div>
   </main>
 
   <nav class="tabbar">
@@ -233,7 +234,15 @@ label.fld{display:block;font-size:13px;color:var(--muted);font-weight:700;margin
 const CLOUD = {
   url:  "https://command-center-gal-default-rtdb.europe-west1.firebasedatabase.app",
   node: "shift-center",
-  pin:  "2468"   // ← קוד כניסה לצוות (אפשר לשנות)
+  pin:  "2468",      // ← קוד כניסה לצוות (אפשר לשנות)
+  ownerPin: "1007"   // ← קוד בעלים (גל בלבד) — פותח את לשונית הבעלים הנסתרת
+};
+
+/* ====== טפסים רשמיים במאנדיי (מסתנכרנים אוטומטית) ====== */
+const FORMS = {
+  onboard: "https://wkf.ms/4mjnq1p",   // טופס איש צוות — קליטת מאמן חדש
+  maor:    "https://wkf.ms/4oA5h0P",   // תעודת מע"ר
+  ins:     "https://wkf.ms/4maSQa5"    // ביטוח אחריות מקצועית
 };
 
 /* ====== נתוני ברירת מחדל (נזרעים בענן בפעם הראשונה) ====== */
@@ -269,8 +278,9 @@ const SEED_ITEMS = [
 /* ============================================================
    מצב מקומי (מראה של הענן)
    ============================================================ */
-let STATE = { coaches:{}, items:{}, checklist:{}, summaries:{}, members:{}, notes:{} };
+let STATE = { coaches:{}, items:{}, checklist:{}, summaries:{}, members:{}, notes:{}, staff:{}, links:{}, syncedAt:null };
 let COACH = localStorage.getItem('sc_coach') || null;
+let IS_OWNER = localStorage.getItem('sc_owner')==='1';
 let SHIFT = localStorage.getItem('sc_shift') || autoShift();
 let TAB = 'shift';
 let CUR_MEMBER = null;
@@ -297,7 +307,8 @@ async function pullAll(){
     STATE = {
       coaches:(data&&data.coaches)||{}, items:(data&&data.items)||{},
       checklist:(data&&data.checklist)||{}, summaries:(data&&data.summaries)||{},
-      members:(data&&data.members)||{}, notes:(data&&data.notes)||{}
+      members:(data&&data.members)||{}, notes:(data&&data.notes)||{},
+      staff:(data&&data.staff)||{}, links:(data&&data.links)||{}, syncedAt:(data&&data.syncedAt)||null
     };
     if(Object.keys(STATE.items).length===0) await seed();
   }catch(e){ cloudOK=false; }
@@ -356,7 +367,7 @@ function enterApp(){
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('curCoach').textContent=COACH;
   document.getElementById('todayStr').textContent=hebDate(new Date());
-  startPoll(); go('shift');
+  buildTabs(); startPoll(); go('shift');
 }
 
 /* ============================================================
@@ -364,7 +375,7 @@ function enterApp(){
    ============================================================ */
 function go(tab){
   TAB=tab;
-  ['shift','summary','members','folder','more'].forEach(t=>{
+  ['shift','summary','members','folder','more','owner'].forEach(t=>{
     document.getElementById('view-'+t).classList.toggle('hidden', t!==tab);
   });
   document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
@@ -377,6 +388,7 @@ function renderCurrent(){
   else if(TAB==='members') renderMembers();
   else if(TAB==='folder') renderFolder();
   else if(TAB==='more') renderMore();
+  else if(TAB==='owner') renderOwner();
 }
 
 /* ============================================================
@@ -683,6 +695,8 @@ function renderMore(){
   const cs=coachList();
   el.innerHTML=`
     <div class="h1">עוד</div>
+    ${myStatusHTML()}
+    ${onboardingHTML()}
     <div class="section-title">👤 הצוות</div>
     <div class="card" style="padding:6px 0">
       ${cs.map(c=>`<div class="check"><div class="txt">${esc(c.name)}</div></div>`).join('')}
@@ -759,6 +773,189 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 const DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const MON=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 function hebDate(d){ return `יום ${DOW[d.getDay()]}, ${d.getDate()} ב${MON[d.getMonth()]}`; }
+
+/* ============================================================
+   מנוע רישוי / תאימות (מסונכרן ממאנדיי)
+   ============================================================ */
+function daysUntil(dateStr){ if(!dateStr) return null; const d=new Date(dateStr+'T00:00:00'); const t=new Date(new Date().toDateString()); return Math.round((d-t)/86400000); }
+function certStatus(exp){
+  if(!exp) return {state:'missing',label:'חסר'};
+  const d=daysUntil(exp);
+  if(d<0)  return {state:'expired',label:'פג תוקף',days:d,exp};
+  if(d<=30)return {state:'soon',label:`עוד ${d} ימים`,days:d,exp};
+  return {state:'valid',label:'בתוקף',days:d,exp};
+}
+function contractStatus(c){
+  if(c==='חתום') return {state:'valid',label:'חתום'};
+  if(c==='נשלח') return {state:'soon',label:'נשלח — ממתין לחתימה'};
+  if(!c||c==='חסר') return {state:'missing',label:'חסר'};
+  return {state:'soon',label:c}; // צריך עדכון וכו'
+}
+function isCoach(s){ return (s.dept||'').includes('מקצועי'); }
+// פריטי החובה לעובד: מאמן צריך מע"ר+ביטוח+חוזה; אחר — חוזה בלבד
+function staffRows(s){
+  const rows=[];
+  if(isCoach(s)){
+    rows.push({key:'maor', title:'תעודת מע"ר', form:FORMS.maor, ...certStatus(s.maorExp)});
+    rows.push({key:'ins',  title:'ביטוח אחריות מקצועית', form:FORMS.ins, ...certStatus(s.insExp)});
+  }
+  rows.push({key:'contract', title:'הסכם עבודה', form:FORMS.onboard, ...contractStatus(s.contract)});
+  return rows;
+}
+function staffSeverity(s){ // worst state among required items
+  const states=staffRows(s).map(r=>r.state);
+  if(states.includes('expired')||states.includes('missing')) return 'expired';
+  if(states.includes('soon')) return 'soon';
+  return 'valid';
+}
+function activeStaff(){ return Object.values(STATE.staff).filter(s=>s.active).sort((a,b)=>(a.order||0)-(b.order||0)); }
+function myStaff(){ // התאמת המאמן המחובר לרשומת המאנדיי לפי שם פרטי
+  if(!COACH) return null;
+  const first=COACH.split(' ')[0];
+  return Object.values(STATE.staff).find(s=>s.name===COACH) || Object.values(STATE.staff).find(s=>s.first===first) || null;
+}
+const STBADGE={valid:['בתוקף','#00c875'],soon:['לחידוש','#fdab3d'],expired:['דרוש טיפול','#df2f4a'],missing:['חסר','#df2f4a']};
+
+function statusPill(state,label){
+  const c={valid:'#00c875',soon:'#fdab3d',expired:'#df2f4a',missing:'#df2f4a'}[state]||'#9bb09d';
+  return `<span style="background:${c}22;color:${c};border:1px solid ${c}55;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap">${esc(label)}</span>`;
+}
+
+/* ============================================================
+   אזור קליטה / מאמן מתחיל + הסטטוס שלי (בתוך "עוד")
+   ============================================================ */
+function onboardingHTML(){
+  const linkItems=Object.entries(STATE.links).map(([id,l])=>({id,...l})).sort((a,b)=>(a.order||0)-(b.order||0));
+  return `
+    <div class="section-title">🚀 מאמן מתחיל — קליטה</div>
+    <div class="empty" style="text-align:start;padding:14px;line-height:1.6">
+      ברוך/ה הבא/ה לצוות BUX! מלא/י את הטפסים הבאים — הם נשלחים אוטומטית למשרד (Monday) ומסתנכרנים אצלנו.
+    </div>
+    <a class="btn" style="margin-top:10px;text-decoration:none" href="${FORMS.onboard}" target="_blank" rel="noopener">📋 טופס פרטי איש צוות</a>
+    <a class="btn gold" style="margin-top:9px;text-decoration:none" href="${FORMS.maor}" target="_blank" rel="noopener">🩹 העלאת תעודת מע"ר (עזרה ראשונה)</a>
+    <a class="btn gold" style="margin-top:9px;text-decoration:none" href="${FORMS.ins}" target="_blank" rel="noopener">🛡️ העלאת ביטוח אחריות מקצועית</a>
+    <div class="section-title">🔗 לינקים חשובים</div>
+    ${linkItems.length?linkItems.map(l=>`<a class="btn ghost" style="margin-top:8px;text-decoration:none;justify-content:flex-start" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 ${esc(l.label)}</a>`).join(''):'<div class="empty">אין עדיין לינקים. גל יכול להוסיף ממסך הבעלים.</div>'}
+  `;
+}
+function myStatusHTML(){
+  const s=myStaff(); if(!s) return '';
+  const rows=staffRows(s); const sev=staffSeverity(s);
+  const head={valid:['✅','הכל בתוקף — מעולה!','#00c875'],soon:['⏳','יש מה לחדש בקרוב','#fdab3d'],expired:['⚠️','דרוש טיפול דחוף','#df2f4a']}[sev];
+  return `
+    <div class="section-title">📋 הסטטוס שלי</div>
+    <div class="card" style="padding:14px;border-color:${head[2]}55">
+      <div style="font-weight:800;color:${head[2]};margin-bottom:10px">${head[0]} ${head[1]}</div>
+      ${rows.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)">
+          <div style="font-weight:700;font-size:14px">${r.title}${r.exp?`<div style="font-size:11px;color:var(--muted);font-weight:500">בתוקף עד ${heb(r.exp)}</div>`:''}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            ${statusPill(r.state,r.label)}
+            ${(r.state!=='valid'&&r.form)?`<a href="${r.form}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline">עדכון »</a>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+function heb(dateStr){ if(!dateStr) return ''; const d=new Date(dateStr+'T00:00:00'); return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()}`; }
+
+/* ============================================================
+   לשונית בעלים (נסתרת — נפתחת בקוד בעלים)
+   ============================================================ */
+function ownerLogin(){
+  openModal(`<h3>כניסת בעלים</h3>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 12px">אזור פרטי לגל בלבד — מצב רישוי כל הצוות.</p>
+    <input id="ownPin" class="pin-input" style="font-size:24px;letter-spacing:8px;margin:0 auto;display:block" inputmode="numeric" maxlength="6" placeholder="••••">
+    <div style="margin-top:16px"><button class="btn" onclick="doOwnerLogin()">כניסה</button></div>`);
+  setTimeout(()=>document.getElementById('ownPin').focus(),100);
+}
+function doOwnerLogin(){
+  if(document.getElementById('ownPin').value.trim()===CLOUD.ownerPin){
+    IS_OWNER=true; localStorage.setItem('sc_owner','1'); closeModal(); buildTabs(); go('owner'); toast('שלום גל 👑');
+  } else toast('קוד שגוי');
+}
+function ownerLogout(){ IS_OWNER=false; localStorage.removeItem('sc_owner'); buildTabs(); go('more'); }
+
+function renderOwner(){
+  const el=document.getElementById('view-owner');
+  const staff=activeStaff();
+  const red=staff.filter(s=>staffSeverity(s)==='expired');
+  const yellow=staff.filter(s=>staffSeverity(s)==='soon');
+  const green=staff.filter(s=>staffSeverity(s)==='valid');
+  // בניית פירוט פערים
+  const gapCard=(s)=>{
+    const rows=staffRows(s).filter(r=>r.state!=='valid');
+    return `<div class="card" style="padding:13px;border-color:${staffSeverity(s)==='expired'?'#df2f4a55':'#fdab3d55'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-weight:800;font-size:15px">${esc(s.name)} <span style="color:var(--muted);font-size:11px;font-weight:500">${esc(s.dept||'')}</span></div>
+      </div>
+      ${rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line)">
+        <span style="font-size:13px">${r.title}${r.exp?` · עד ${heb(r.exp)}`:''}</span>${statusPill(r.state,r.label)}</div>`).join('')}
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <a href="tel:+${esc((s.phone||'').replace(/^972/,'972'))}" class="btn ghost sm" style="text-decoration:none">📞 ${esc(s.first)}</a>
+        ${s.email?`<a href="https://wa.me/${esc(s.phone)}" target="_blank" class="btn ghost sm" style="text-decoration:none">💬 וואטסאפ</a>`:''}
+      </div>
+    </div>`;
+  };
+  el.innerHTML=`
+    <div class="h1">👑 מסך בעלים</div>
+    <div class="sub">מצב רישוי ותאימות של כל הצוות · עודכן ${STATE.syncedAt?heb(STATE.syncedAt):'—'}</div>
+    <div style="display:flex;gap:8px">
+      <div class="card" style="flex:1;padding:14px;text-align:center;border-color:#df2f4a55"><div style="font-size:26px;font-weight:900;color:#df2f4a">${red.length}</div><div style="font-size:12px;color:var(--muted)">דרוש טיפול</div></div>
+      <div class="card" style="flex:1;padding:14px;text-align:center;border-color:#fdab3d55"><div style="font-size:26px;font-weight:900;color:#fdab3d">${yellow.length}</div><div style="font-size:12px;color:var(--muted)">לחידוש בקרוב</div></div>
+      <div class="card" style="flex:1;padding:14px;text-align:center;border-color:#00c87555"><div style="font-size:26px;font-weight:900;color:#00c875">${green.length}</div><div style="font-size:12px;color:var(--muted)">תקין</div></div>
+    </div>
+
+    ${red.length?`<div class="section-title" style="color:#df2f4a">⚠️ דרוש טיפול</div>${red.map(gapCard).join('')}`:''}
+    ${yellow.length?`<div class="section-title" style="color:#fdab3d">⏳ לחידוש בקרוב (30 יום)</div>${yellow.map(gapCard).join('')}`:''}
+
+    <div class="section-title">📊 כל הצוות</div>
+    <div class="card" style="overflow-x:auto;padding:0">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap">
+        <thead><tr style="background:var(--card-2)">
+          <th style="text-align:start;padding:9px 12px">שם</th><th style="padding:9px 6px">מע"ר</th><th style="padding:9px 6px">ביטוח</th><th style="padding:9px 6px">חוזה</th>
+        </tr></thead>
+        <tbody>${staff.map(s=>{
+          const r=staffRows(s); const find=k=>r.find(x=>x.key===k);
+          const cell=x=>x?`<td style="padding:8px 6px;text-align:center">${statusPill(x.state,x.state==='valid'?'✓':(x.state==='soon'?'⏳':'✕'))}</td>`:'<td style="padding:8px 6px;text-align:center;color:var(--muted)">—</td>';
+          return `<tr style="border-top:1px solid var(--line)"><td style="padding:8px 12px;font-weight:700">${esc(s.name)}</td>${cell(find('maor'))}${cell(find('ins'))}${cell(find('contract'))}</tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+
+    <div class="section-title">🔗 ניהול לינקים חשובים</div>
+    <div id="ownerLinks">${Object.entries(STATE.links).map(([id,l])=>`<div class="check" style="border-color:var(--line)"><div class="txt">${esc(l.label)}</div><button class="btn danger sm" onclick="delLink('${id}')">הסר</button></div>`).join('')||'<div class="empty">אין לינקים</div>'}</div>
+    <label class="fld">הוספת לינק (כותרת + כתובת)</label>
+    <input id="lkLabel" type="text" placeholder="כותרת — למשל: נוהל בטיחות" style="margin-bottom:8px">
+    <div style="display:flex;gap:8px"><input id="lkUrl" type="text" placeholder="https://…"><button class="btn sm" style="white-space:nowrap" onclick="addLink()">＋</button></div>
+
+    <div class="section-title">⚙️ פעולות</div>
+    <div class="empty" style="text-align:start;padding:14px;line-height:1.7">
+      הנתונים נמשכים מ-Monday. לרענון מצב הרישוי — בקש/י מ-Claude "תעדכן את מרכז המשמרת ממאנדיי".<br>
+      <a href="https://cfbux.monday.com/boards/2099048589" target="_blank" style="color:var(--gold)">פתיחת בורד עובדים במאנדיי »</a>
+    </div>
+    <button class="btn ghost sm" onclick="ownerLogout()">יציאה ממצב בעלים</button>
+    <div style="height:24px"></div>
+  `;
+}
+async function addLink(){
+  const label=document.getElementById('lkLabel').value.trim(), url=document.getElementById('lkUrl').value.trim();
+  if(!label||!url){ toast('צריך כותרת וכתובת'); return; }
+  const id='l'+uid(); const order=Object.keys(STATE.links).length;
+  const rec={label,url,order}; await cPut(`/links/${id}`,rec); STATE.links[id]=rec; renderOwner();
+}
+async function delLink(id){ await cDel(`/links/${id}`); delete STATE.links[id]; renderOwner(); }
+
+/* בניית סרגל הטאבים (מוסיף בעלים רק אם נכנסת בקוד) */
+function buildTabs(){
+  const owner=IS_OWNER?`<button data-tab="owner" onclick="go('owner')"><span class="ic">👑</span>בעלים</button>`:'';
+  document.querySelector('.tabbar').innerHTML=`
+    <button data-tab="shift" onclick="go('shift')"><span class="ic">✅</span>משמרת</button>
+    <button data-tab="summary" onclick="go('summary')"><span class="ic">📝</span>סיכומים</button>
+    <button data-tab="members" onclick="go('members')"><span class="ic">👥</span>מתאמנים</button>
+    <button data-tab="more" onclick="go('more')"><span class="ic">⚙️</span>עוד</button>
+    ${owner}`;
+  document.querySelector(`.tabbar button[data-tab="${TAB}"]`)?.classList.add('on');
+}
 
 /* ============================================================
    הפעלה
