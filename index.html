@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1F5D24">
+<title>מרכז המשמרת · BUX</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="מרכז המשמרת">
+<style>
+/* ============================================================
+   מרכז המשמרת — CrossFit BUX
+   צבעי מותג: ירוק #1F5D24 · זהב #F1C93B
+   ============================================================ */
+:root{
+  --green:#1F5D24; --green-2:#2c7a33; --gold:#F1C93B; --gold-2:#d9b22c;
+  --bg:#0d130e; --bg-2:#131c14; --card:#18241a; --card-2:#1f2e21;
+  --line:#2a3b2c; --txt:#eef3ee; --muted:#9bb09d; --danger:#e25555; --danger-bg:#3a1a1a;
+  --radius:18px; --shadow:0 6px 22px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Heebo,Arial,sans-serif;
+  background:radial-gradient(900px 500px at 80% -10%,#16271a 0%,var(--bg) 55%);
+  color:var(--txt); min-height:100vh; -webkit-font-smoothing:antialiased;
+  padding-bottom:84px;
+}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+input,textarea,select{font-family:inherit}
+.hidden{display:none!important}
+
+/* ---------- כותרת עליונה ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(180deg,rgba(13,19,14,.96),rgba(13,19,14,.82));
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;
+}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px}
+.brand .logo{
+  width:30px;height:30px;border-radius:9px;background:var(--gold);color:var(--green);
+  display:grid;place-items:center;font-weight:900;font-size:14px;flex:none;
+}
+.brand small{color:var(--gold);font-weight:700;font-size:11px;display:block;margin-top:-2px}
+.coach-chip{
+  display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;
+}
+.coach-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.coach-chip button{font-size:11px;color:var(--muted);background:none;padding:0;text-decoration:underline}
+.meta-line{margin-top:8px;color:var(--muted);font-size:12.5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* ---------- מסך ---------- */
+.screen{padding:14px 14px 20px;max-width:680px;margin:0 auto}
+.h1{font-size:20px;font-weight:800;margin:2px 0 12px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+
+/* ---------- בורר משמרת ---------- */
+.shift-toggle{display:flex;gap:8px;background:var(--card);padding:5px;border-radius:14px;border:1px solid var(--line)}
+.shift-toggle button{flex:1;padding:11px;border-radius:10px;font-weight:800;font-size:15px;color:var(--muted);background:none;transition:.15s}
+.shift-toggle button.on{background:var(--green);color:#fff;box-shadow:var(--shadow)}
+.shift-toggle button .em{font-size:18px;margin-inline-end:4px}
+
+/* ---------- כרטיסים / צ'קליסט ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;background:var(--card-2);border-bottom:1px solid var(--line)}
+.card-head h3{margin:0;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.card-head .count{font-size:12px;color:var(--gold);font-weight:800}
+.check{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid var(--line);transition:.12s}
+.check:last-child{border-bottom:none}
+.check .box{
+  width:26px;height:26px;border-radius:8px;border:2px solid var(--green-2);flex:none;
+  display:grid;place-items:center;font-size:15px;transition:.12s;background:transparent
+}
+.check.done .box{background:var(--green);border-color:var(--green);color:#fff}
+.check .txt{flex:1;font-size:15px;font-weight:600}
+.check.done .txt{color:var(--muted);text-decoration:line-through}
+.check .who{font-size:11px;color:var(--gold);font-weight:700;text-align:start;flex:none}
+
+.progress{height:6px;background:var(--bg-2);border-radius:99px;overflow:hidden;margin:4px 15px 0}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:.3s}
+
+/* ---------- כפתורים ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:13px;font-weight:800;font-size:15px;background:var(--green);color:#fff;width:100%;box-shadow:var(--shadow)}
+.btn:active{transform:scale(.99)}
+.btn.gold{background:var(--gold);color:var(--green)}
+.btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--txt);box-shadow:none}
+.btn.sm{width:auto;padding:9px 14px;font-size:13px}
+.btn.danger{background:var(--danger-bg);color:var(--danger);border:1px solid #5a2a2a;box-shadow:none}
+
+/* ---------- טפסים ---------- */
+textarea,input[type=text],input[type=tel],select{
+  width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+  color:var(--txt);padding:13px;font-size:15px;outline:none
+}
+textarea{min-height:120px;resize:vertical;line-height:1.5}
+textarea:focus,input:focus,select:focus{border-color:var(--green-2)}
+label.fld{display:block;font-size:13px;color:var(--muted);font-weight:700;margin:14px 0 6px}
+
+/* ---------- צ'יפים לתיוג ---------- */
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.tag{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700}
+.tag.new{background:var(--gold);color:var(--green)}
+.tag button{background:none;font-weight:900;font-size:14px;line-height:1;padding:0;opacity:.8}
+
+/* ---------- פיד סיכומים ---------- */
+.summary-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:12px;box-shadow:var(--shadow)}
+.summary-item .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px}
+.pill{background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-weight:700}
+.pill.shift{background:var(--green);color:#fff;border-color:var(--green)}
+.pill.coach{color:var(--gold)}
+.summary-item .body{font-size:14.5px;line-height:1.55;white-space:pre-wrap}
+.summary-item .ment{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
+.mini-tag{background:var(--bg-2);border:1px solid var(--green-2);color:var(--gold);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+
+/* ---------- מתאמנים ---------- */
+.search{position:relative;margin-bottom:6px}
+.member-row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px}
+.member-row:active{border-color:var(--green-2)}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-2));display:grid;place-items:center;font-weight:800;font-size:16px;color:var(--gold);flex:none}
+.member-row .info{flex:1;min-width:0}
+.member-row .nm{font-weight:800;font-size:15.5px}
+.member-row .sn{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-row .chev{color:var(--muted);font-size:20px}
+.risk-badge{background:var(--danger-bg);color:var(--danger);border:1px solid #5a2a2a;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;display:inline-flex;gap:4px;align-items:center}
+
+/* ---------- תיקיית מתאמן ---------- */
+.folder-head{display:flex;align-items:center;gap:13px;margin:6px 0 4px}
+.folder-head .avatar{width:54px;height:54px;font-size:20px}
+.folder-head .nm{font-size:21px;font-weight:800}
+.section-title{font-size:13px;font-weight:800;color:var(--gold);margin:20px 0 8px;display:flex;align-items:center;gap:7px;text-transform:none}
+.note{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;margin-top:9px}
+.note.retention{background:var(--danger-bg);border-color:#5a2a2a}
+.note.injury{background:#2a2410;border-color:#5a4d1a}
+.note.goal{background:#102a1f;border-color:#1a5a3f}
+.note .nmeta{font-size:11.5px;color:var(--muted);margin-bottom:5px;display:flex;gap:8px}
+.note .nbody{font-size:14px;line-height:1.5;white-space:pre-wrap}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:18px;background:var(--card);border:1px dashed var(--line);border-radius:13px;margin-top:9px}
+
+/* ---------- ניווט תחתון ---------- */
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;
+  background:linear-gradient(0deg,var(--bg) 70%,rgba(13,19,14,.7));
+  border-top:1px solid var(--line);padding:6px 6px calc(env(safe-area-inset-bottom) + 6px)
+}
+.tabbar button{flex:1;background:none;color:var(--muted);font-size:11px;font-weight:700;padding:7px 2px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar button .ic{font-size:21px;line-height:1}
+.tabbar button.on{color:var(--gold)}
+.tabbar button.on .ic{transform:translateY(-1px)}
+
+/* ---------- מודאל ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:grid;place-items:end center;padding:0}
+.modal{background:var(--bg-2);border:1px solid var(--line);border-top-left-radius:22px;border-top-right-radius:22px;width:100%;max-width:680px;max-height:88vh;overflow:auto;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.modal h3{margin:0 0 4px;font-size:18px}
+.grab{width:42px;height:5px;background:var(--line);border-radius:99px;margin:0 auto 12px}
+
+/* ---------- כניסה ---------- */
+.gate{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center}
+.gate .logo-big{width:80px;height:80px;border-radius:22px;background:var(--gold);color:var(--green);display:grid;place-items:center;font-weight:900;font-size:30px;box-shadow:var(--shadow);margin-bottom:16px}
+.gate h1{font-size:26px;margin:0 0 4px}
+.gate p{color:var(--muted);margin:0 0 24px}
+.coach-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;width:100%;max-width:420px}
+.coach-btn{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 10px;font-size:17px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.coach-btn:active{border-color:var(--gold);background:var(--card-2)}
+.coach-btn .av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-2));display:grid;place-items:center;color:var(--gold);font-size:18px}
+.pin-input{font-size:30px;letter-spacing:12px;text-align:center;max-width:240px;font-weight:800}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:11px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:90;box-shadow:var(--shadow);opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+.cloud-dot{width:7px;height:7px;border-radius:50%;background:#4caf50;display:inline-block}
+.cloud-dot.off{background:var(--danger)}
+.fab{position:fixed;bottom:92px;inset-inline-start:16px;z-index:45}
+</style>
+</head>
+<body>
+
+<!-- ===================== כניסה ===================== -->
+<div id="gate" class="gate">
+  <div class="logo-big">BUX</div>
+  <h1>מרכז המשמרת</h1>
+  <p id="gateSub">בחר/י את השם שלך כדי להתחיל</p>
+  <div id="pinWrap" class="hidden">
+    <input id="pinField" class="pin-input" inputmode="numeric" maxlength="4" placeholder="••••">
+    <div style="margin-top:16px"><button class="btn" style="max-width:240px" onclick="checkPin()">כניסה</button></div>
+  </div>
+  <div id="coachGrid" class="coach-grid hidden"></div>
+</div>
+
+<!-- ===================== אפליקציה ===================== -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="row">
+      <div class="brand"><span class="logo">BUX</span><div>מרכז המשמרת<small>CrossFit BUX</small></div></div>
+      <div class="coach-chip"><span class="dot"></span><span id="curCoach">—</span><button onclick="switchCoach()">החלף</button></div>
+    </div>
+    <div class="meta-line">
+      <span id="todayStr">—</span>
+      <span>·</span>
+      <span><span id="cloudDot" class="cloud-dot"></span> מסונכרן לכל הצוות</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="view-shift" class="screen"></div>
+    <div id="view-summary" class="screen hidden"></div>
+    <div id="view-members" class="screen hidden"></div>
+    <div id="view-folder" class="screen hidden"></div>
+    <div id="view-more" class="screen hidden"></div>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="shift" class="on" onclick="go('shift')"><span class="ic">✅</span>משמרת</button>
+    <button data-tab="summary" onclick="go('summary')"><span class="ic">📝</span>סיכומים</button>
+    <button data-tab="members" onclick="go('members')"><span class="ic">👥</span>מתאמנים</button>
+    <button data-tab="more" onclick="go('more')"><span class="ic">⚙️</span>עוד</button>
+  </nav>
+</div>
+
+<div id="modalHost"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================================
+   הגדרות ענן — Firebase Realtime Database (משותף לכל הצוות)
+   ------------------------------------------------------------
+   ✏️ קוד הכניסה לצוות (PIN): שנה כאן אם תרצה. כל מאמן מקיש פעם אחת במכשיר.
+   ============================================================ */
+const CLOUD = {
+  url:  "https://command-center-gal-default-rtdb.europe-west1.firebasedatabase.app",
+  node: "shift-center",
+  pin:  "2468"   // ← קוד כניסה לצוות (אפשר לשנות)
+};
+
+/* ====== נתוני ברירת מחדל (נזרעים בענן בפעם הראשונה) ====== */
+const SEED_COACHES = ["נדב","פיני","טל","שקד","נועם","שנטל","דנה","שיר","לאה","טלי"];
+
+const SEED_ITEMS = [
+  // בוקר — לפני
+  {shift:"morning",phase:"before",text:"פתיחת המועדון"},
+  {shift:"morning",phase:"before",text:"הדלקת אורות ומזגנים"},
+  {shift:"morning",phase:"before",text:"הכנת ובדיקת ציוד האימון"},
+  {shift:"morning",phase:"before",text:"ניגוב משטחים"},
+  {shift:"morning",phase:"before",text:"מילוי מים"},
+  {shift:"morning",phase:"before",text:"הצגת אימון היום על הלוח"},
+  {shift:"morning",phase:"before",text:"מוזיקה"},
+  // בוקר — אחרי
+  {shift:"morning",phase:"after",text:"סידור ציוד"},
+  {shift:"morning",phase:"after",text:"ניגוב מהיר"},
+  {shift:"morning",phase:"after",text:"בדיקת מלאי (מגנזיום/נייר)"},
+  {shift:"morning",phase:"after",text:"סימון מתאמנים שדורשים מעקב"},
+  // ערב — לפני
+  {shift:"evening",phase:"before",text:"בדיקת ציוד וסידור"},
+  {shift:"evening",phase:"before",text:"עדכון לוח אימון"},
+  {shift:"evening",phase:"before",text:"קבלת מתאמנים"},
+  // ערב — אחרי
+  {shift:"evening",phase:"after",text:"סידור והחזרת כל הציוד"},
+  {shift:"evening",phase:"after",text:"ניקיון"},
+  {shift:"evening",phase:"after",text:"כיבוי אורות ומזגנים"},
+  {shift:"evening",phase:"after",text:"ריקון פחים"},
+  {shift:"evening",phase:"after",text:"איפוס המקום לבוקר"},
+  {shift:"evening",phase:"after",text:"נעילת המועדון"},
+];
+
+/* ============================================================
+   מצב מקומי (מראה של הענן)
+   ============================================================ */
+let STATE = { coaches:{}, items:{}, checklist:{}, summaries:{}, members:{}, notes:{} };
+let COACH = localStorage.getItem('sc_coach') || null;
+let SHIFT = localStorage.getItem('sc_shift') || autoShift();
+let TAB = 'shift';
+let CUR_MEMBER = null;
+let pollTimer = null, typing = false, cloudOK = true;
+
+function autoShift(){ const h=new Date().getHours(); return (h>=4 && h<15)?'morning':'evening'; }
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function uid(){ return 'm'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4); }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================================================
+   שכבת ענן (REST)
+   ============================================================ */
+const base = ()=> `${CLOUD.url}/${CLOUD.node}`;
+async function cGet(path=''){ const r=await fetch(`${base()}${path}.json`); return r.json(); }
+async function cPut(path,data){ return fetch(`${base()}${path}.json`,{method:'PUT',body:JSON.stringify(data)}); }
+async function cPost(path,data){ const r=await fetch(`${base()}${path}.json`,{method:'POST',body:JSON.stringify(data)}); return r.json(); }
+async function cDel(path){ return fetch(`${base()}${path}.json`,{method:'DELETE'}); }
+
+async function pullAll(){
+  try{
+    const data = await cGet('');
+    cloudOK = true;
+    STATE = {
+      coaches:(data&&data.coaches)||{}, items:(data&&data.items)||{},
+      checklist:(data&&data.checklist)||{}, summaries:(data&&data.summaries)||{},
+      members:(data&&data.members)||{}, notes:(data&&data.notes)||{}
+    };
+    if(Object.keys(STATE.items).length===0) await seed();
+  }catch(e){ cloudOK=false; }
+  updateCloudDot();
+}
+
+async function seed(){
+  const items={}, coaches={};
+  SEED_COACHES.forEach((n,i)=>{ const id='c'+i; coaches[id]={name:n,active:true,order:i}; });
+  SEED_ITEMS.forEach((it,i)=>{ const id='i'+String(i).padStart(2,'0'); items[id]={...it,order:i}; });
+  await cPut('/coaches',coaches); await cPut('/items',items);
+  STATE.coaches=coaches; STATE.items=items;
+}
+
+function updateCloudDot(){ const d=document.getElementById('cloudDot'); if(d) d.className='cloud-dot'+(cloudOK?'':' off'); }
+
+/* פולינג — מתעדכן אצל כולם, נעצר בזמן הקלדה כדי לא לדרוס ----- */
+function startPoll(){ stopPoll(); pollTimer=setInterval(async()=>{ if(typing) return; await pullAll(); renderCurrent(); },18000); }
+function stopPoll(){ if(pollTimer) clearInterval(pollTimer); }
+
+/* ============================================================
+   כניסה
+   ============================================================ */
+function bootGate(){
+  // אם כבר אומת המכשיר — דלג לבחירת מאמן
+  if(localStorage.getItem('sc_pin_ok')==='1'){ showCoachPick(); }
+  else {
+    document.getElementById('pinWrap').classList.remove('hidden');
+    document.getElementById('gateSub').textContent='הקש/י את קוד הצוות';
+    const f=document.getElementById('pinField');
+    f.focus(); f.addEventListener('keydown',e=>{ if(e.key==='Enter') checkPin(); });
+  }
+}
+function checkPin(){
+  const v=document.getElementById('pinField').value.trim();
+  if(v===CLOUD.pin){ localStorage.setItem('sc_pin_ok','1'); showCoachPick(); }
+  else { toast('קוד שגוי'); document.getElementById('pinField').value=''; }
+}
+async function showCoachPick(){
+  document.getElementById('pinWrap').classList.add('hidden');
+  document.getElementById('gateSub').textContent='בחר/י את השם שלך כדי להתחיל';
+  const grid=document.getElementById('coachGrid'); grid.classList.remove('hidden');
+  grid.innerHTML='<div class="empty" style="grid-column:1/-1">טוען צוות…</div>';
+  await pullAll();
+  const list=coachList();
+  grid.innerHTML = list.map(c=>`<button class="coach-btn" onclick="pickCoach('${esc(c.name)}')"><span class="av">${esc(c.name[0])}</span>${esc(c.name)}</button>`).join('');
+}
+function coachList(){
+  return Object.values(STATE.coaches).filter(c=>c.active!==false).sort((a,b)=>(a.order||0)-(b.order||0));
+}
+function pickCoach(name){ COACH=name; localStorage.setItem('sc_coach',name); enterApp(); }
+function switchCoach(){ localStorage.removeItem('sc_coach'); COACH=null; location.reload(); }
+
+function enterApp(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('curCoach').textContent=COACH;
+  document.getElementById('todayStr').textContent=hebDate(new Date());
+  startPoll(); go('shift');
+}
+
+/* ============================================================
+   ניווט
+   ============================================================ */
+function go(tab){
+  TAB=tab;
+  ['shift','summary','members','folder','more'].forEach(t=>{
+    document.getElementById('view-'+t).classList.toggle('hidden', t!==tab);
+  });
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  window.scrollTo(0,0);
+  renderCurrent();
+}
+function renderCurrent(){
+  if(TAB==='shift') renderShift();
+  else if(TAB==='summary') renderSummary();
+  else if(TAB==='members') renderMembers();
+  else if(TAB==='folder') renderFolder();
+  else if(TAB==='more') renderMore();
+}
+
+/* ============================================================
+   מסך 1 — מרכז המשמרת (צ'קליסט)
+   ============================================================ */
+function setShift(s){ SHIFT=s; localStorage.setItem('sc_shift',s); renderShift(); }
+
+function itemsFor(shift,phase){
+  return Object.entries(STATE.items)
+    .filter(([id,it])=>it.shift===shift && it.phase===phase)
+    .sort((a,b)=>(a[1].order||0)-(b[1].order||0))
+    .map(([id,it])=>({id,...it}));
+}
+function checkState(itemId){
+  const day=STATE.checklist[todayKey()]||{}; const sh=day[SHIFT]||{}; return sh[itemId]||null;
+}
+async function toggleCheck(itemId){
+  const cur=checkState(itemId); const day=todayKey();
+  if(cur){
+    await cDel(`/checklist/${day}/${SHIFT}/${itemId}`);
+    if(STATE.checklist[day]&&STATE.checklist[day][SHIFT]) delete STATE.checklist[day][SHIFT][itemId];
+  } else {
+    const rec={coach:COACH,at:Date.now()};
+    await cPut(`/checklist/${day}/${SHIFT}/${itemId}`,rec);
+    STATE.checklist[day]=STATE.checklist[day]||{}; STATE.checklist[day][SHIFT]=STATE.checklist[day][SHIFT]||{};
+    STATE.checklist[day][SHIFT][itemId]=rec;
+  }
+  renderShift();
+}
+
+function phaseCard(title,emoji,phase){
+  const items=itemsFor(SHIFT,phase);
+  const done=items.filter(it=>checkState(it.id)).length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  const rows=items.map(it=>{
+    const st=checkState(it.id);
+    return `<div class="check ${st?'done':''}" onclick="toggleCheck('${it.id}')">
+      <div class="box">${st?'✓':''}</div>
+      <div class="txt">${esc(it.text)}</div>
+      ${st?`<div class="who">${esc(st.coach)}</div>`:''}
+    </div>`;
+  }).join('') || `<div class="empty">אין משימות — אפשר להוסיף ב"עוד"</div>`;
+  return `<div class="card">
+    <div class="card-head"><h3>${emoji} ${title}</h3><span class="count">${done}/${items.length}</span></div>
+    <div class="progress"><i style="width:${pct}%"></i></div>
+    ${rows}
+  </div>`;
+}
+
+function renderShift(){
+  const el=document.getElementById('view-shift');
+  el.innerHTML = `
+    <div class="shift-toggle">
+      <button class="${SHIFT==='morning'?'on':''}" onclick="setShift('morning')"><span class="em">🌅</span>בוקר</button>
+      <button class="${SHIFT==='evening'?'on':''}" onclick="setShift('evening')"><span class="em">🌙</span>ערב</button>
+    </div>
+    ${phaseCard('לפני המשמרת','🔓','before')}
+    ${phaseCard('אחרי המשמרת','🔒','after')}
+    <div style="margin-top:16px"><button class="btn gold" onclick="go('summary')">📝 כתיבת סיכום משמרת</button></div>
+  `;
+}
+
+/* ============================================================
+   מסך 2 — סיכום משמרת
+   ============================================================ */
+let DRAFT_TAGS = []; // [{name, memberId|null(new)}]
+
+function renderSummary(){
+  const el=document.getElementById('view-summary');
+  const feed=Object.entries(STATE.summaries)
+    .map(([id,s])=>({id,...s}))
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))
+    .slice(0,40);
+  el.innerHTML = `
+    <div class="h1">סיכום משמרת</div>
+    <div class="card" style="padding:14px">
+      <label class="fld">איך עברה המשמרת? (${SHIFT==='morning'?'בוקר':'ערב'})</label>
+      <textarea id="sumBody" placeholder="מה קרה היום? מי בלט, מי חסר, מה צריך לזכור למשמרת הבאה…"></textarea>
+      <label class="fld">תיוג מתאמנים <span style="font-weight:400">(הקלד שם + Enter — אם חדש, תיפתח לו תיקייה)</span></label>
+      <input id="tagInput" type="text" list="memberDL" placeholder="שם מתאמן…" autocomplete="off">
+      <datalist id="memberDL">${Object.values(STATE.members).map(m=>`<option value="${esc(m.name)}">`).join('')}</datalist>
+      <div id="tagChips" class="tags"></div>
+      <div style="margin-top:16px"><button class="btn" onclick="saveSummary()">שמירת סיכום</button></div>
+    </div>
+    <div class="section-title">📜 סיכומים אחרונים</div>
+    ${feed.length?feed.map(summaryHTML).join(''):'<div class="empty">עדיין אין סיכומים. הסיכום הראשון יופיע כאן.</div>'}
+  `;
+  renderTagChips();
+  const ti=document.getElementById('tagInput');
+  ti.addEventListener('focus',()=>typing=true);
+  ti.addEventListener('blur',()=>setTimeout(()=>typing=false,300));
+  ti.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(ti.value); ti.value=''; } });
+  const sb=document.getElementById('sumBody');
+  sb.addEventListener('focus',()=>typing=true);
+  sb.addEventListener('blur',()=>setTimeout(()=>typing=false,300));
+}
+function addTag(name){
+  name=(name||'').trim(); if(!name) return;
+  if(DRAFT_TAGS.some(t=>t.name===name)) return;
+  const ex=Object.entries(STATE.members).find(([id,m])=>m.name===name);
+  DRAFT_TAGS.push({name, memberId: ex?ex[0]:null});
+  renderTagChips();
+}
+function removeTag(name){ DRAFT_TAGS=DRAFT_TAGS.filter(t=>t.name!==name); renderTagChips(); }
+function renderTagChips(){
+  const c=document.getElementById('tagChips'); if(!c) return;
+  c.innerHTML=DRAFT_TAGS.map(t=>`<span class="tag ${t.memberId?'':'new'}">${esc(t.name)}${t.memberId?'':' ✦'}<button onclick="removeTag('${esc(t.name)}')">×</button></span>`).join('');
+}
+async function saveSummary(){
+  const body=document.getElementById('sumBody').value.trim();
+  if(!body && DRAFT_TAGS.length===0){ toast('כתוב/י משהו קודם'); return; }
+  // ודא שלכל תיוג יש מתאמן (צור חדשים)
+  const mentions=[];
+  for(const t of DRAFT_TAGS){
+    let id=t.memberId;
+    if(!id){ id=await createMember(t.name); }
+    mentions.push(id);
+  }
+  const rec={ date:todayKey(), shift:SHIFT, coach:COACH, body, mentions, createdAt:Date.now() };
+  const res=await cPost('/summaries',rec);
+  if(res&&res.name) STATE.summaries[res.name]=rec;
+  DRAFT_TAGS=[];
+  toast('הסיכום נשמר ✓');
+  await pullAll(); renderSummary();
+}
+function summaryHTML(s){
+  const ments=(s.mentions||[]).map(id=>STATE.members[id]).filter(Boolean);
+  return `<div class="summary-item">
+    <div class="meta">
+      <span class="pill shift">${s.shift==='morning'?'🌅 בוקר':'🌙 ערב'}</span>
+      <span class="pill coach">${esc(s.coach)}</span>
+      <span class="pill">${hebDate(new Date(s.createdAt||Date.now()))}</span>
+    </div>
+    ${s.body?`<div class="body">${esc(s.body)}</div>`:''}
+    ${ments.length?`<div class="ment">${ments.map(m=>`<span class="mini-tag" onclick="openFolderByName('${esc(m.name)}')">👤 ${esc(m.name)}</span>`).join('')}</div>`:''}
+  </div>`;
+}
+
+/* ============================================================
+   מסך 3 — מתאמנים
+   ============================================================ */
+let MEMBER_SEARCH='';
+async function createMember(name,basics){
+  const id=uid();
+  const rec={name, basics:basics||'', retention:false, createdAt:Date.now(), createdBy:COACH};
+  await cPut(`/members/${id}`,rec); STATE.members[id]=rec; return id;
+}
+function memberList(){
+  return Object.entries(STATE.members).map(([id,m])=>({id,...m}))
+    .filter(m=>!MEMBER_SEARCH || m.name.includes(MEMBER_SEARCH))
+    .sort((a,b)=>a.name.localeCompare(b.name,'he'));
+}
+function noteCount(id){ const n=STATE.notes[id]; return n?Object.keys(n).length:0; }
+function mentionCount(id){ return Object.values(STATE.summaries).filter(s=>(s.mentions||[]).includes(id)).length; }
+
+function renderMembers(){
+  const el=document.getElementById('view-members');
+  const list=memberList();
+  el.innerHTML=`
+    <div class="h1">מתאמנים <span style="color:var(--muted);font-size:14px;font-weight:600">(${Object.keys(STATE.members).length})</span></div>
+    <div class="search"><input id="memSearch" type="text" placeholder="🔍 חיפוש לפי שם…" value="${esc(MEMBER_SEARCH)}"></div>
+    <div style="margin-top:10px"><button class="btn ghost sm" onclick="addMemberModal()">＋ הוסף מתאמן</button></div>
+    ${list.length?list.map(memberRowHTML).join(''):'<div class="empty">אין מתאמנים עדיין. הוסף ידנית או תייג בסיכום משמרת.</div>'}
+  `;
+  const s=document.getElementById('memSearch');
+  s.addEventListener('input',e=>{ MEMBER_SEARCH=e.target.value; const l=memberList();
+    // עדכון רשימה בלבד בלי לאבד פוקוס
+    const rows=l.length?l.map(memberRowHTML).join(''):'<div class="empty">לא נמצאו מתאמנים.</div>';
+    let host=document.getElementById('memberRows'); if(host) host.innerHTML=rows;
+  });
+  // עטוף שורות במיכל לחיפוש חי
+  el.innerHTML=el.innerHTML.replace(/(<div style="margin-top:10px">.*?<\/div>)/s,'$1<div id="memberRows">'+(list.length?list.map(memberRowHTML).join(''):'<div class="empty">אין מתאמנים עדיין. הוסף ידנית או תייג בסיכום משמרת.</div>')+'</div>');
+  // re-bind
+  const s2=document.getElementById('memSearch');
+  s2.addEventListener('input',e=>{ MEMBER_SEARCH=e.target.value; const l=memberList();
+    document.getElementById('memberRows').innerHTML=l.length?l.map(memberRowHTML).join(''):'<div class="empty">לא נמצאו מתאמנים.</div>';
+  });
+}
+function memberRowHTML(m){
+  const nc=noteCount(m.id), mc=mentionCount(m.id);
+  const sn=[m.basics&&m.basics.split('\n')[0], nc?`${nc} הערות`:'', mc?`${mc} אזכורים`:''].filter(Boolean).join(' · ')||'אין מידע עדיין';
+  return `<div class="member-row" onclick="openFolder('${m.id}')">
+    <div class="avatar">${esc(m.name[0]||'?')}</div>
+    <div class="info"><div class="nm">${esc(m.name)} ${m.retention?'<span class="risk-badge">⚠ סיכון</span>':''}</div><div class="sn">${esc(sn)}</div></div>
+    <div class="chev">‹</div>
+  </div>`;
+}
+function addMemberModal(){
+  openModal(`<h3>הוספת מתאמן</h3>
+    <label class="fld">שם מלא</label><input id="nmNew" type="text" placeholder="שם המתאמן">
+    <label class="fld">פרטים (טלפון, סוג מנוי…)</label><textarea id="bsNew" style="min-height:70px" placeholder="אופציונלי"></textarea>
+    <div style="margin-top:16px"><button class="btn" onclick="doAddMember()">הוספה</button></div>`);
+  setTimeout(()=>document.getElementById('nmNew').focus(),100);
+}
+async function doAddMember(){
+  const nm=document.getElementById('nmNew').value.trim(); if(!nm){ toast('צריך שם'); return; }
+  const bs=document.getElementById('bsNew').value.trim();
+  const id=await createMember(nm,bs); closeModal(); toast('המתאמן נוסף ✓'); openFolder(id);
+}
+
+/* ============================================================
+   מסך 4 — תיקיית מתאמן
+   ============================================================ */
+function openFolder(id){ CUR_MEMBER=id; go('folder'); }
+function openFolderByName(name){ const e=Object.entries(STATE.members).find(([id,m])=>m.name===name); if(e) openFolder(e[0]); }
+
+function notesOf(id,type){
+  const n=STATE.notes[id]||{};
+  return Object.entries(n).map(([nid,x])=>({nid,...x}))
+    .filter(x=>!type||x.type===type)
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+function mentionsOf(id){
+  return Object.entries(STATE.summaries).map(([sid,s])=>({sid,...s}))
+    .filter(s=>(s.mentions||[]).includes(id))
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+
+function renderFolder(){
+  const el=document.getElementById('view-folder');
+  const m=STATE.members[CUR_MEMBER];
+  if(!m){ el.innerHTML='<div class="empty">לא נמצא מתאמן</div>'; return; }
+  const id=CUR_MEMBER;
+  const notes=notesOf(id,'note'), inj=notesOf(id,'injury'), goals=notesOf(id,'goal'), ret=notesOf(id,'retention');
+  const ments=mentionsOf(id);
+  el.innerHTML=`
+    <button class="btn ghost sm" onclick="go('members')">‹ חזרה למתאמנים</button>
+    <div class="folder-head">
+      <div class="avatar">${esc(m.name[0]||'?')}</div>
+      <div><div class="nm">${esc(m.name)}</div>${m.basics?`<div class="sn" style="color:var(--muted);font-size:13px;white-space:pre-wrap;margin-top:3px">${esc(m.basics)}</div>`:''}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn ghost sm" onclick="editBasics('${id}')">✏️ פרטים</button>
+      <button class="btn ${m.retention?'danger':'ghost'} sm" onclick="toggleRetention('${id}')">${m.retention?'⚠ בסיכון נטישה':'סמן בסיכון'}</button>
+    </div>
+
+    ${m.retention?`<div class="section-title" style="color:var(--danger)">⚠ נקודת שימור</div>
+      ${ret.length?ret.map(n=>noteHTML(n,'retention')).join(''):'<div class="empty">סומן בסיכון — הוסף הערה מה לעשות</div>'}
+      <button class="btn danger sm" style="margin-top:9px" onclick="addNoteModal('${id}','retention')">＋ הערת שימור</button>`:''}
+
+    <div class="section-title">📓 הערות הצוות</div>
+    ${notes.length?notes.map(n=>noteHTML(n,'note')).join(''):'<div class="empty">אין הערות עדיין</div>'}
+    <button class="btn ghost sm" style="margin-top:9px" onclick="addNoteModal('${id}','note')">＋ הוסף הערה</button>
+
+    <div class="section-title">🩹 פציעות / מגבלות</div>
+    ${inj.length?inj.map(n=>noteHTML(n,'injury')).join(''):'<div class="empty">אין מגבלות רשומות</div>'}
+    <button class="btn ghost sm" style="margin-top:9px" onclick="addNoteModal('${id}','injury')">＋ פציעה / מגבלה</button>
+
+    <div class="section-title">🎯 מטרות והתקדמות</div>
+    ${goals.length?goals.map(n=>noteHTML(n,'goal')).join(''):'<div class="empty">אין מטרות רשומות</div>'}
+    <button class="btn ghost sm" style="margin-top:9px" onclick="addNoteModal('${id}','goal')">＋ מטרה</button>
+
+    <div class="section-title">🔗 אזכורים בסיכומים (${ments.length})</div>
+    ${ments.length?ments.map(summaryHTML).join(''):'<div class="empty">לא הוזכר בסיכומים עדיין</div>'}
+    <div style="height:30px"></div>
+  `;
+}
+function noteHTML(n,cls){
+  return `<div class="note ${cls}">
+    <div class="nmeta"><span>${esc(n.coach||'')}</span><span>·</span><span>${hebDate(new Date(n.createdAt||Date.now()))}</span></div>
+    <div class="nbody">${esc(n.body)}</div>
+  </div>`;
+}
+function addNoteModal(id,type){
+  const titles={note:'הוספת הערה',injury:'פציעה / מגבלה',goal:'מטרה',retention:'הערת שימור'};
+  openModal(`<h3>${titles[type]}</h3>
+    <textarea id="noteBody" placeholder="${type==='retention'?'למשל: לא הגיע שבועיים — לתאם שיחה':'כתוב/י כאן…'}"></textarea>
+    <div style="margin-top:16px"><button class="btn" onclick="doAddNote('${id}','${type}')">שמירה</button></div>`);
+  setTimeout(()=>document.getElementById('noteBody').focus(),100);
+}
+async function doAddNote(id,type){
+  const body=document.getElementById('noteBody').value.trim(); if(!body){ toast('כתוב/י משהו'); return; }
+  const rec={type,body,coach:COACH,createdAt:Date.now()};
+  const res=await cPost(`/notes/${id}`,rec);
+  if(res&&res.name){ STATE.notes[id]=STATE.notes[id]||{}; STATE.notes[id][res.name]=rec; }
+  if(type==='retention' && !STATE.members[id].retention){ await cPut(`/members/${id}/retention`,true); STATE.members[id].retention=true; }
+  closeModal(); toast('נשמר ✓'); renderFolder();
+}
+async function toggleRetention(id){
+  const nv=!STATE.members[id].retention;
+  await cPut(`/members/${id}/retention`,nv); STATE.members[id].retention=nv;
+  if(nv) addNoteModal(id,'retention'); else renderFolder();
+}
+function editBasics(id){
+  const m=STATE.members[id];
+  openModal(`<h3>פרטי מתאמן</h3>
+    <label class="fld">שם</label><input id="ebNm" type="text" value="${esc(m.name)}">
+    <label class="fld">פרטים (טלפון, מנוי, כללי)</label><textarea id="ebBs">${esc(m.basics||'')}</textarea>
+    <div style="margin-top:16px"><button class="btn" onclick="doEditBasics('${id}')">שמירה</button></div>`);
+}
+async function doEditBasics(id){
+  const nm=document.getElementById('ebNm').value.trim(), bs=document.getElementById('ebBs').value.trim();
+  if(!nm){ toast('צריך שם'); return; }
+  await cPut(`/members/${id}/name`,nm); await cPut(`/members/${id}/basics`,bs);
+  STATE.members[id].name=nm; STATE.members[id].basics=bs;
+  closeModal(); renderFolder();
+}
+
+/* ============================================================
+   מסך "עוד" — הגדרות + מקום למודולים עתידיים
+   ============================================================ */
+function renderMore(){
+  const el=document.getElementById('view-more');
+  const cs=coachList();
+  el.innerHTML=`
+    <div class="h1">עוד</div>
+    <div class="section-title">👤 הצוות</div>
+    <div class="card" style="padding:6px 0">
+      ${cs.map(c=>`<div class="check"><div class="txt">${esc(c.name)}</div></div>`).join('')}
+    </div>
+    <button class="btn ghost sm" style="margin-top:9px" onclick="manageCoaches()">✏️ עריכת רשימת הצוות</button>
+
+    <div class="section-title">✅ עריכת צ'קליסט</div>
+    <button class="btn ghost sm" onclick="manageItems()">פתיחת עריכת המשימות</button>
+
+    <div class="section-title">🧩 מודולים נוספים</div>
+    <div class="empty" style="text-align:start;padding:14px;line-height:1.6">
+      כאן יתווספו בעתיד מודולים: סטטיסטיקות שימור, לוח משימות צוותי, סיכומי שבוע אוטומטיים,
+      וחיבור ל-Arbox למשיכת נתוני מתאמנים אמיתיים.
+    </div>
+
+    <div class="section-title">ℹ️ מידע</div>
+    <div class="empty" style="text-align:start;padding:14px;line-height:1.7">
+      מחובר/ת כ: <b>${esc(COACH)}</b><br>
+      כל הנתונים משותפים ומסונכרנים לכל הצוות בזמן אמת.<br>
+      <span style="color:var(--muted)">כלי פנימי לצוות BUX בלבד — מכיל מידע אישי ורגיש.</span>
+    </div>
+    <button class="btn ghost sm" style="margin-top:9px" onclick="switchCoach()">החלפת מאמן / יציאה</button>
+    <div style="height:20px"></div>
+  `;
+}
+function manageCoaches(){
+  const cs=coachList();
+  openModal(`<h3>עריכת הצוות</h3>
+    <div id="coachEdit">${cs.map(c=>coachEditRow(c)).join('')}</div>
+    <label class="fld">הוספת מאמן/ה</label>
+    <div style="display:flex;gap:8px"><input id="newCoach" type="text" placeholder="שם"><button class="btn sm" style="white-space:nowrap" onclick="addCoach()">＋</button></div>`);
+}
+function coachEditRow(c){
+  return `<div class="check" style="border-color:var(--line)"><div class="txt">${esc(c.name)}</div><button class="btn danger sm" onclick="removeCoach('${c.id||findCoachId(c.name)}')">הסר</button></div>`;
+}
+function findCoachId(name){ const e=Object.entries(STATE.coaches).find(([id,c])=>c.name===name); return e?e[0]:''; }
+async function addCoach(){
+  const nm=document.getElementById('newCoach').value.trim(); if(!nm) return;
+  const id='c'+uid(); const order=Object.keys(STATE.coaches).length;
+  const rec={name:nm,active:true,order};
+  await cPut(`/coaches/${id}`,rec); STATE.coaches[id]=rec; manageCoaches();
+}
+async function removeCoach(id){
+  await cPut(`/coaches/${id}/active`,false); if(STATE.coaches[id]) STATE.coaches[id].active=false; manageCoaches(); renderMore();
+}
+function manageItems(){
+  const phases=[['morning','before','🌅 בוקר · לפני'],['morning','after','🌅 בוקר · אחרי'],['evening','before','🌙 ערב · לפני'],['evening','after','🌙 ערב · אחרי']];
+  openModal(`<h3>עריכת צ'קליסט</h3>
+    ${phases.map(([sh,ph,lbl])=>`
+      <div class="section-title">${lbl}</div>
+      ${itemsFor(sh,ph).map(it=>`<div class="check" style="border-color:var(--line)"><div class="txt">${esc(it.text)}</div><button class="btn danger sm" onclick="removeItem('${it.id}')">הסר</button></div>`).join('')||'<div class="empty">ריק</div>'}
+      <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="ni_${sh}_${ph}" placeholder="משימה חדשה"><button class="btn sm" style="white-space:nowrap" onclick="addItem('${sh}','${ph}')">＋</button></div>
+    `).join('')}`);
+}
+async function addItem(sh,ph){
+  const inp=document.getElementById(`ni_${sh}_${ph}`); const txt=inp.value.trim(); if(!txt) return;
+  const id='i'+uid(); const order=Object.keys(STATE.items).length;
+  const rec={shift:sh,phase:ph,text:txt,order};
+  await cPut(`/items/${id}`,rec); STATE.items[id]=rec; manageItems(); renderShift();
+}
+async function removeItem(id){ await cDel(`/items/${id}`); delete STATE.items[id]; manageItems(); renderShift(); }
+
+/* ============================================================
+   מודאל / טוסט / תאריך
+   ============================================================ */
+function openModal(html){
+  document.getElementById('modalHost').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="grab"></div>${html}</div></div>`;
+  typing=true;
+}
+function closeModal(){ document.getElementById('modalHost').innerHTML=''; setTimeout(()=>typing=false,300); }
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+const DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const MON=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+function hebDate(d){ return `יום ${DOW[d.getDay()]}, ${d.getDate()} ב${MON[d.getMonth()]}`; }
+
+/* ============================================================
+   הפעלה
+   ============================================================ */
+bootGate();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
